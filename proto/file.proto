@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package file;
+
+import "google/protobuf/wrappers.proto";
+
+message FileHeader {
+  string key = 1;
+  string value = 2;
+}
+
+message FilePart {
+  uint32 owner = 1;
+  string name = 2;
+  uint32 offset = 3;
+  uint32 size = 4;
+  string id = 5;
+}
+
+message File {
+  string _id = 1;
+  string name = 2;
+  string original_name = 3;
+  string mime_type = 4;
+  uint32 size = 5;
+  string slug = 6;
+  bool loading_from_cloud_now = 7;
+  repeated FileHeader headers = 8;
+  repeated FilePart parts = 9;
+}
+
+service FileService{
+  rpc CreateFile(CreateFileRequestDTO) returns (File) {}
+  rpc CreateFilePart(CreateFilePartRequestDTO) returns (Int32Value) {}
+  rpc SetLoading(SetLoadingRequestDTO) returns (Int32Value) {}
+  rpc GetBySlug(GetBySlugRequestDTO) returns (File) {}
+}
+
+message CreateFileRequestDTO {
+  string name = 1;
+  string original_name = 2;
+  string mime_type = 3;
+  uint32 size = 4;
+  repeated FileHeader headers = 5;
+}
+
+message CreateFilePartRequestDTO {
+  string _id = 1;
+  FilePart part = 2;
+}
+
+message SetLoadingRequestDTO {
+  string _id = 1;
+  bool loading_from_cloud_now = 2;
+}
+
+message GetBySlugRequestDTO {
+  string slug = 1;
+}
