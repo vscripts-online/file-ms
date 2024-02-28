@@ -2,14 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AccountSchema } from '../model';
+import { AccountTypes__Output } from 'pb/account/AccountTypes';
 
 @Injectable()
 export class AccountRepository {
   @InjectModel(AccountSchema.name) private readonly model: Model<AccountSchema>;
 
-  // async new_account(type: AccountTypes, label?: string) {
-  //   return await this.model.create({ type, label });
-  // }
+  async new_account(type: AccountTypes__Output, label?: string) {
+    return await this.model.create({ type, label });
+  }
 
   // async sync_size(
   //   _id: string,
@@ -22,23 +23,23 @@ export class AccountRepository {
   //   return await this.model.findOneAndDelete({ _id });
   // }
 
-  // async get_accounts(params: ISearch = DEFAULT_SEARCH) {
-  //   let { limit, skip } = params || DEFAULT_SEARCH;
+  async get_accounts(params = { limit: 20, skip: 0 }) {
+    let { limit, skip } = params || { limit: 20, skip: 0 };
 
-  //   if (!limit) {
-  //     limit = 20;
-  //   }
+    if (!limit) {
+      limit = 20;
+    }
 
-  //   if (!skip) {
-  //     skip = 0;
-  //   }
+    if (!skip) {
+      skip = 0;
+    }
 
-  //   return await this.model.find().skip(skip).limit(limit);
-  // }
+    return await this.model.find().skip(skip).limit(limit);
+  }
 
-  // async get_account_by_id(_id: string) {
-  //   return this.model.findOne({ _id });
-  // }
+  async get_account_by_id(_id: string) {
+    return this.model.findOne({ _id });
+  }
 
   // async get_by_available_size_and_decrease(size: number) {
   //   return this.model
@@ -56,18 +57,18 @@ export class AccountRepository {
   //   );
   // }
 
-  // async set_access_token(
-  //   _id: string,
-  //   access_token: string,
-  //   access_token_expiry_time: number,
-  // ) {
-  //   return this.model.updateOne(
-  //     { _id },
-  //     { $set: { access_token, access_token_expiry_time } },
-  //   );
-  // }
+  async set_access_token(
+    _id: string,
+    access_token: string,
+    access_token_expiry_time: number,
+  ) {
+    return this.model.updateOne(
+      { _id },
+      { $set: { access_token, access_token_expiry_time } },
+    );
+  }
 
-  // async delete_file_by_id({ _id }) {
-  //   return this.model.deleteOne({ _id });
-  // }
+  async delete_file_by_id(_id: string) {
+    return this.model.findOneAndDelete({ _id });
+  }
 }

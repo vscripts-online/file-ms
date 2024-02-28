@@ -3,6 +3,8 @@ import { Module } from '@nestjs/common';
 import { MONGO_URI } from './common';
 import { DatabaseModule } from './database/database.module';
 import { AccountModule, FileModule } from './modules';
+import { CallbackModule } from './modules/callback/callback.module';
+import { StorageModule } from './modules/storage/storage.module';
 
 @Module({
   imports: [
@@ -10,6 +12,8 @@ import { AccountModule, FileModule } from './modules';
     DatabaseModule,
     FileModule,
     AccountModule,
+    CallbackModule,
+    StorageModule,
   ],
 })
 export class AppModule {}
