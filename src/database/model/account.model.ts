@@ -7,7 +7,7 @@ export enum AccountTypes {
 }
 
 export interface IAccountSchema {
-  _id?: Types.ObjectId;
+  _id?: Types.ObjectId | string;
   type: AccountTypes;
   label?: string;
   client_id?: string;

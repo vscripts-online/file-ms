@@ -4,8 +4,6 @@ import { PORT } from './common';
 
 const services = ['account', 'file'];
 
-console.log(PORT);
-
 export const grpc_options: GrpcOptions = {
   transport: Transport.GRPC,
   options: {

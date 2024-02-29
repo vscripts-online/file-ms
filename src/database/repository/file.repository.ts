@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model, ProjectionType, QueryOptions } from 'mongoose';
-import { FileSchema, IFileSchema } from '../model';
+import { FileSchema, IFilePartSchema, IFileSchema } from '../model';
 
 @Injectable()
 export class FileRepository {
@@ -27,12 +27,12 @@ export class FileRepository {
     return this.model.create(file);
   }
 
-  // async create_file_part(_id: string, file_part: IFilePartSchema) {
-  //   return this.model.updateOne(
-  //     { _id },
-  //     { $push: { parts: { ...file_part } } },
-  //   );
-  // }
+  async create_file_part(_id: string, file_part: IFilePartSchema) {
+    return this.model.updateOne(
+      { _id },
+      { $push: { parts: { ...file_part } } },
+    );
+  }
 
   // async get_unsynced_files() {
   //   return this.model

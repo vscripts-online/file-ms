@@ -27,6 +27,7 @@ module.exports = {
         endOfLine: 'auto',
       },
     ],
-    'curly': 'error'
+    'curly': 'error',
+    '@typescript-eslint/ban-ts-comment': 'off'
   },
 };

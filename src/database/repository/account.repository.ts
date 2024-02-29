@@ -41,21 +41,21 @@ export class AccountRepository {
     return this.model.findOne({ _id });
   }
 
-  // async get_by_available_size_and_decrease(size: number) {
-  //   return this.model
-  //     .findOneAndUpdate(
-  //       { available_size: { $gt: size } },
-  //       { $inc: { available_size: 0 - size } },
-  //     )
-  //     .sort({ available_size: -1 });
-  // }
+  async get_by_available_size_and_decrease(size: number) {
+    return this.model
+      .findOneAndUpdate(
+        { available_size: { $gt: size } },
+        { $inc: { available_size: 0 - size } },
+      )
+      .sort({ available_size: -1 });
+  }
 
-  // async increase_available_size(_id: string, size: number) {
-  //   return this.model.updateOne(
-  //     { _id },
-  //     { $inc: { available_size: 0 - size } },
-  //   );
-  // }
+  async increase_available_size(_id: string, size: number) {
+    return this.model.updateOne(
+      { _id },
+      { $inc: { available_size: 0 - size } },
+    );
+  }
 
   async set_access_token(
     _id: string,

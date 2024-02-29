@@ -1,11 +1,12 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import * as fs from 'node:fs';
+import { google } from 'googleapis';
+import { Document } from 'mongoose';
+import * as stream from 'node:stream';
+import { AccountTypes } from 'pb/account/AccountTypes';
+import { REDIRECT_URI_GOOGLE } from 'src/common';
 import { IAccountSchema, IFilePartSchema } from 'src/database';
 import { AccountRepository } from 'src/database/repository/account.repository';
 import { GoogleDrive } from './drives';
-import { AccountTypes } from 'pb/account/AccountTypes';
-import { google } from 'googleapis';
-import { REDIRECT_URI_GOOGLE } from 'src/common';
 
 export interface AccountLoginState {
   _id: string;
@@ -31,7 +32,7 @@ export class StorageService {
     }
   }
 
-  async upload(account: IAccountSchema, name: string, stream: fs.ReadStream) {
+  async upload(account: IAccountSchema, name: string, stream: stream.Readable) {
     const drive = await this.get_storage(account).get_drive();
 
     try {
@@ -77,5 +78,29 @@ export class StorageService {
     });
 
     return url;
+  }
+
+  async callback_google(account: Document & IAccountSchema) {
+    const oAuth2Client = new google.auth.OAuth2(
+      account.client_id,
+      account.client_secret,
+      REDIRECT_URI_GOOGLE,
+    );
+
+    const { tokens } = await oAuth2Client.getToken({ code: account.code });
+    console.log('tokens', tokens);
+
+    account.access_token = tokens.access_token || account.access_token;
+    account.refresh_token = tokens.refresh_token || account.refresh_token;
+    account.access_token_expiry_time =
+      tokens.expiry_date || account.access_token_expiry_time;
+
+    const { available_size, storage_size } =
+      await this.get_storage_sizes(account);
+
+    account.storage_size = storage_size;
+    account.available_size = available_size;
+
+    return account.save();
   }
 }
