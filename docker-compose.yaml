@@ -32,6 +32,8 @@ services:
     volumes:
       - ./docker/rs-init.sh:/rs-init.sh
       - mongo1_volume:/data/db
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
 
   mongo2:
     image: mongodb/mongodb-community-server:latest
@@ -41,6 +43,8 @@ services:
       - 10004:27017
     volumes:
       - mongo2_volume:/data/db
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
 
   mongo3:
     image: mongodb/mongodb-community-server:latest
@@ -50,6 +54,8 @@ services:
       - 10005:27017
     volumes:
       - mongo3_volume:/data/db
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
 
 volumes:
   mongo1_volume:
