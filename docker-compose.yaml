@@ -1,0 +1,57 @@
+version: '3'
+
+services:
+  app:
+    restart: always
+    build:
+      context: .
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MONGO_URI: mongodb://host.docker.internal:10003,host.docker.internal:10004,host.docker.internal:10005/vscr-cdn
+      REDIRECT_URI_GOOGLE: http://localhost:3000/callback_google
+    ports:
+      - 20003:3000
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+  mongo1:
+    image: mongodb/mongodb-community-server:latest
+    command: --replSet rs0
+    container_name: mongo1
+    ports:
+      - 10003:27017
+    healthcheck:
+      test: test $$(echo "rs.initiate().ok || rs.status().ok" | sh /rs-init.sh) -eq 1
+      interval: 10s
+      start_period: 30s
+    volumes:
+      - ./docker/rs-init.sh:/rs-init.sh
+      - mongo1_volume:/data/db
+
+  mongo2:
+    image: mongodb/mongodb-community-server:latest
+    command: --replSet rs0
+    container_name: mongo2
+    ports:
+      - 10004:27017
+    volumes:
+      - mongo2_volume:/data/db
+
+  mongo3:
+    image: mongodb/mongodb-community-server:latest
+    command: --replSet rs0
+    container_name: mongo3
+    ports:
+      - 10005:27017
+    volumes:
+      - mongo3_volume:/data/db
+
+volumes:
+  mongo1_volume:
+  mongo2_volume:
+  mongo3_volume:
