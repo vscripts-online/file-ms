@@ -20,7 +20,10 @@ export interface IAccountSchema {
   available_size: number;
 }
 
-@Schema({ collection: 'account' })
+@Schema({
+  collection: 'account',
+  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+})
 export class AccountSchema extends BaseSchema implements IAccountSchema {
   @Prop({ enum: AccountTypes })
   type: AccountTypes;

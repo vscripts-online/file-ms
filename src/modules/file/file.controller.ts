@@ -79,6 +79,27 @@ export class FileController implements GrpcService<FileServiceHandlers> {
   async GetFiles(data: GetFilesRequestDTO__Output): Promise<Observable<File>> {
     const { limit: _limit, sort_by, where } = data;
     const { limit, skip } = _limit || {};
+
+    if (where.created_at?.gte) {
+      where.created_at['$gte'] = where.created_at.gte;
+      delete where.created_at.gte;
+    }
+
+    if (where.created_at?.lte) {
+      where.created_at['$lte'] = where.created_at.lte;
+      delete where.created_at.lte;
+    }
+
+    if (where.updated_at?.gte) {
+      where.updated_at['$gte'] = where.updated_at.gte;
+      delete where.updated_at.gte;
+    }
+
+    if (where.updated_at?.lte) {
+      where.updated_at['$lte'] = where.updated_at.lte;
+      delete where.updated_at.lte;
+    }
+
     const files = await this.fileRepository.get_files(
       where,
       { limit, skip },

@@ -12,9 +12,13 @@ export interface IFileSchema {
   slug: string;
   parts?: FilePartSchema[];
   headers?: FileHeaderSchema[];
+  user: number;
 }
 
-@Schema({ collection: 'file' })
+@Schema({
+  collection: 'file',
+  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+})
 export class FileSchema extends BaseSchema implements IFileSchema {
   @Prop({ nullable: false })
   name: string;
@@ -39,6 +43,9 @@ export class FileSchema extends BaseSchema implements IFileSchema {
 
   @Prop({ type: FilePartSchema, default: [] })
   parts?: FilePartSchema[];
+
+  @Prop({ nullable: false })
+  user: number;
 }
 
 export const FileSchemaClass = SchemaFactory.createForClass(FileSchema);
