@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AccountSchema } from '../model';
 import { AccountTypes__Output } from 'pb/account/AccountTypes';
+import { TotalStorageResponse } from 'pb/account/TotalStorageResponse';
 
 @Injectable()
 export class AccountRepository {
@@ -70,5 +71,20 @@ export class AccountRepository {
 
   async delete_file_by_id(_id: string) {
     return this.model.findOneAndDelete({ _id });
+  }
+
+  async get_total_storage(): Promise<TotalStorageResponse> {
+    const [result] = await this.model.aggregate([
+      {
+        $group: {
+          _id: 0,
+          total_storage: { $sum: '$storage_size' },
+          available_storage: { $sum: '$available_size' },
+          total_accounts: { $sum: 1 },
+        },
+      },
+    ]);
+
+    return result;
   }
 }

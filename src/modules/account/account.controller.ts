@@ -16,6 +16,7 @@ import { CallbackGoogleRequestDTO__Output } from 'pb/account/CallbackGoogleReque
 import { IncreaseSizeRequestDTO__Output } from 'pb/account/IncreaseSizeRequestDTO';
 import { NewAccountRequestDTO__Output } from 'pb/account/NewAccountRequestDTO';
 import { PaginationRequestDTO__Output } from 'pb/account/PaginationRequestDTO';
+import { TotalStorageResponse } from 'pb/account/TotalStorageResponse';
 import { UploadRequestDTO__Output } from 'pb/account/UploadRequestDTO';
 import {
   StringValue,
@@ -181,5 +182,10 @@ export class AccountController implements GrpcService<AccountServiceHandlers> {
     }
 
     return { value: file_id };
+  }
+
+  @GrpcMethod(SERVICE_NAME)
+  async TotalStorage(): Promise<TotalStorageResponse> {
+    return this.accountRepository.get_total_storage();
   }
 }

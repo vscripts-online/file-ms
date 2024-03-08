@@ -15,6 +15,7 @@ export const grpc_options: GrpcOptions = {
     loader: {
       keepCase: true,
       enums: String,
+      longs: String,
     },
   },
 };
