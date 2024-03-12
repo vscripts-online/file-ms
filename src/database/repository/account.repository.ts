@@ -87,4 +87,9 @@ export class AccountRepository {
 
     return result;
   }
+
+  async update_label(_id: string, label: string): Promise<boolean> {
+    const result = await this.model.updateOne({ _id }, { label });
+    return !!result.modifiedCount;
+  }
 }

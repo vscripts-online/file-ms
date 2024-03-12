@@ -28,6 +28,8 @@ import { Observable, from } from 'rxjs';
 import { GrpcService } from 'src/common/type';
 import { AccountRepository } from 'src/database';
 import { StorageService } from '../storage/storage.service';
+import { BoolValue__Output } from 'pb/google/protobuf/BoolValue';
+import { UpdateLabelDTO__Output } from 'pb/account/UpdateLabelDTO';
 
 const SERVICE_NAME = 'AccountService';
 
@@ -195,5 +197,12 @@ export class AccountController implements GrpcService<AccountServiceHandlers> {
   async TotalStorage(): Promise<TotalStorageResponse> {
     const count = await this.accountRepository.get_total_storage();
     return count;
+  }
+
+  @GrpcMethod(SERVICE_NAME)
+  async UpdateLabel(data: UpdateLabelDTO__Output): Promise<BoolValue__Output> {
+    const { _id, label } = data;
+    const response = await this.accountRepository.update_label(_id, label);
+    return { value: response };
   }
 }
