@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model, ProjectionType, QueryOptions } from 'mongoose';
 import { FileSchema, IFilePartSchema, IFileSchema } from '../model';
+import { UpdateFileRequestDTO__Output } from 'pb/file/UpdateFileRequestDTO';
 
 @Injectable()
 export class FileRepository {
@@ -17,6 +18,14 @@ export class FileRepository {
     options?: QueryOptions<FileSchema>,
   ) {
     return this.model.findOne<FileSchema>(filter, projection, options);
+  }
+
+  async update(params: UpdateFileRequestDTO__Output) {
+    const { _id, file_name, headers, user } = params;
+    return this.model.findOneAndUpdate<FileSchema>(
+      { _id, user },
+      { file_name, headers },
+    );
   }
 
   async is_slug_exists(slug: string) {

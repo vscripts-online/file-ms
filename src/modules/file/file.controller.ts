@@ -16,6 +16,7 @@ import { GrpcService } from 'src/common/type';
 import { FileRepository, IAccountSchema } from 'src/database';
 import { AccountController } from '../account';
 import { StorageService } from '../storage/storage.service';
+import { UpdateFileRequestDTO__Output } from 'pb/file/UpdateFileRequestDTO';
 
 const SERVICE_NAME = 'FileService';
 
@@ -53,7 +54,11 @@ export class FileController implements GrpcService<FileServiceHandlers> {
   @GrpcMethod(SERVICE_NAME)
   async CreateFile(data: CreateFileRequestDTO__Output): Promise<File> {
     const slug = await this.createSlug();
-    const file = this.fileRepository.new_file({ ...data, slug });
+    const file = this.fileRepository.new_file({
+      ...data,
+      slug,
+      size: parseInt(data.size),
+    });
     return file;
   }
 
@@ -71,7 +76,11 @@ export class FileController implements GrpcService<FileServiceHandlers> {
     data: CreateFilePartRequestDTO__Output,
   ): Promise<Int32Value> {
     const { _id, part } = data;
-    const response = await this.fileRepository.create_file_part(_id, part);
+    const response = await this.fileRepository.create_file_part(_id, {
+      ...part,
+      offset: parseInt(part.offset),
+      size: parseInt(part.size),
+    });
     return { value: response.modifiedCount };
   }
 
@@ -125,7 +134,7 @@ export class FileController implements GrpcService<FileServiceHandlers> {
   ): Promise<Observable<BytesValue>> {
     await this.SetLoading({ _id: file._id, loading_from_cloud_now: true });
     const sorted_file_parts =
-      file.parts?.sort((a, b) => a.offset - b.offset) || [];
+      file.parts?.sort((a, b) => parseInt(a.offset) - parseInt(b.offset)) || [];
     if (sorted_file_parts.length === 0) {
       throw new RpcException('There is no file parts');
     }
@@ -134,6 +143,16 @@ export class FileController implements GrpcService<FileServiceHandlers> {
     this.pipe_cloud_to_response(sorted_file_parts, response);
 
     return response.asObservable();
+  }
+
+  @GrpcMethod(SERVICE_NAME)
+  async UpdateFile(data: UpdateFileRequestDTO__Output): Promise<File> {
+    const file = await this.fileRepository.update(data);
+    if (!file) {
+      throw new RpcException('File not found');
+    }
+
+    return file;
   }
 
   // @ts-ignore
@@ -149,7 +168,11 @@ export class FileController implements GrpcService<FileServiceHandlers> {
 
         const cloud_stream = await this.storageService.get_file_from_storage(
           account as IAccountSchema,
-          file_part,
+          {
+            ...file_part,
+            offset: parseInt(file_part.offset),
+            size: parseInt(file_part.size),
+          },
         );
 
         cloud_stream.on('data', (data) => {

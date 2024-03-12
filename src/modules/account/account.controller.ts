@@ -54,8 +54,11 @@ export class AccountController implements GrpcService<AccountServiceHandlers> {
   @GrpcMethod(SERVICE_NAME)
   async DeleteAccount(data: StringValue__Output): Promise<Account> {
     const { value } = data;
-    const response = await this.accountRepository.delete_file_by_id(value);
-    return response;
+    const account = await this.accountRepository.delete_file_by_id(value);
+    if (!account) {
+      throw new RpcException('Account not found');
+    }
+    return account;
   }
 
   @GrpcMethod(SERVICE_NAME)
@@ -78,6 +81,10 @@ export class AccountController implements GrpcService<AccountServiceHandlers> {
   ): Promise<StringValue> {
     const { _id, client_id, client_secret } = data;
     const account = await this.accountRepository.get_account_by_id(_id);
+    if (!account) {
+      throw new RpcException('Account not found');
+    }
+
     if (account.type !== AccountTypes.GOOGLE) {
       throw new RpcException('Account type is not GOOGLE');
     }
@@ -186,6 +193,7 @@ export class AccountController implements GrpcService<AccountServiceHandlers> {
 
   @GrpcMethod(SERVICE_NAME)
   async TotalStorage(): Promise<TotalStorageResponse> {
-    return this.accountRepository.get_total_storage();
+    const count = await this.accountRepository.get_total_storage();
+    return count;
   }
 }

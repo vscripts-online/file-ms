@@ -46,6 +46,9 @@ export class FileSchema extends BaseSchema implements IFileSchema {
 
   @Prop({ nullable: false })
   user: number;
+
+  @Prop({ nullable: false })
+  file_name: string;
 }
 
 export const FileSchemaClass = SchemaFactory.createForClass(FileSchema);
