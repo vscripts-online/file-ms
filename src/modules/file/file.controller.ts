@@ -1,14 +1,22 @@
-import { Controller, Inject, forwardRef } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { GrpcMethod, RpcException } from '@nestjs/microservices';
 import { nanoid } from 'nanoid';
 import { CreateFilePartRequestDTO__Output } from 'pb/file/CreateFilePartRequestDTO';
 import { CreateFileRequestDTO__Output } from 'pb/file/CreateFileRequestDTO';
+import { DeleteFileDTO__Output } from 'pb/file/DeleteFileDTO';
 import { File, File__Output } from 'pb/file/File';
 import { FilePart__Output } from 'pb/file/FilePart';
 import { FileServiceHandlers } from 'pb/file/FileService';
 import { GetBySlugRequestDTO__Output } from 'pb/file/GetBySlugRequestDTO';
 import { GetFilesRequestDTO__Output } from 'pb/file/GetFilesRequestDTO';
 import { SetLoadingRequestDTO__Output } from 'pb/file/SetLoadingRequestDTO';
+import { UpdateFileRequestDTO__Output } from 'pb/file/UpdateFileRequestDTO';
+import { BoolValue } from 'pb/google/protobuf/BoolValue';
 import { BytesValue } from 'pb/google/protobuf/BytesValue';
 import { Int32Value } from 'pb/google/protobuf/Int32Value';
 import { Observable, Subject, from } from 'rxjs';
@@ -16,7 +24,6 @@ import { GrpcService } from 'src/common/type';
 import { FileRepository, IAccountSchema } from 'src/database';
 import { AccountController } from '../account';
 import { StorageService } from '../storage/storage.service';
-import { UpdateFileRequestDTO__Output } from 'pb/file/UpdateFileRequestDTO';
 
 const SERVICE_NAME = 'FileService';
 
@@ -140,7 +147,7 @@ export class FileController implements GrpcService<FileServiceHandlers> {
     }
     const response = new Subject<BytesValue>();
 
-    this.pipe_cloud_to_response(sorted_file_parts, response);
+    this.pipe_cloud_to_response(file._id, sorted_file_parts, response);
 
     return response.asObservable();
   }
@@ -155,8 +162,37 @@ export class FileController implements GrpcService<FileServiceHandlers> {
     return file;
   }
 
+  @GrpcMethod(SERVICE_NAME)
+  async DeleteFile(data: DeleteFileDTO__Output): Promise<File> {
+    const { _id, user } = data;
+    const file = await this.fileRepository.delete({ _id, user });
+    if (!file) {
+      throw new BadRequestException('File not found');
+    }
+    return file;
+  }
+
+  @GrpcMethod(SERVICE_NAME)
+  async DeleteFileFromStorage(data: FilePart__Output): Promise<BoolValue> {
+    const { id, owner, size } = data;
+
+    const account = (await this.accountController.GetAccount({
+      value: owner,
+    })) as IAccountSchema;
+
+    const response = await this.storageService.delete_file(account, id);
+
+    await this.accountController.IncreaseSize({
+      _id: owner,
+      size,
+    });
+
+    return { value: response };
+  }
+
   // @ts-ignore
   private async pipe_cloud_to_response(
+    _id: string,
     sorted_file_parts: FilePart__Output[],
     response: Subject<BytesValue>,
   ) {
@@ -191,5 +227,6 @@ export class FileController implements GrpcService<FileServiceHandlers> {
     }
 
     response.complete();
+    this.SetLoading({ _id, loading_from_cloud_now: false });
   }
 }

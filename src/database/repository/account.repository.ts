@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { AccountSchema } from '../model';
+import { AccountSchema, IAccountSchema } from '../model';
 import { AccountTypes__Output } from 'pb/account/AccountTypes';
 import { TotalStorageResponse } from 'pb/account/TotalStorageResponse';
 
@@ -13,16 +13,26 @@ export class AccountRepository {
     return await this.model.create({ type, label });
   }
 
-  // async sync_size(
-  //   _id: string,
-  //   params: Pick<IAccountSchema, 'storage_size' | 'available_size'>,
-  // ): Promise<any> {
-  //   return await this.model.findOneAndUpdate({ _id }, params, { new: true });
-  // }
+  async sync_size(
+    _id: string,
+    params: Pick<IAccountSchema, 'storage_size' | 'available_size'>,
+  ) {
+    return await this.model.updateOne(
+      { _id },
+      { ...params, sync_time: new Date() },
+      { new: true },
+    );
+  }
 
-  // async delete_account(_id: string) {
-  //   return await this.model.findOneAndDelete({ _id });
-  // }
+  async delete_account(_id: string) {
+    return await this.model.findOneAndDelete({ _id });
+  }
+
+  async get_unsynced_accounts() {
+    return this.model.find({
+      sync_time: { $lte: new Date(Date.now() - 60000 * 60 * 24) },
+    });
+  }
 
   async get_accounts(params = { limit: 20, skip: 0 }) {
     let { limit, skip } = params || { limit: 20, skip: 0 };
@@ -52,10 +62,7 @@ export class AccountRepository {
   }
 
   async increase_available_size(_id: string, size: number) {
-    return this.model.updateOne(
-      { _id },
-      { $inc: { available_size: 0 - size } },
-    );
+    return this.model.updateOne({ _id }, { $inc: { available_size: size } });
   }
 
   async set_access_token(

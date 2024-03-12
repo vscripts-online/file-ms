@@ -103,4 +103,14 @@ export class StorageService {
 
     return account.save();
   }
+
+  async delete_file(account: IAccountSchema, fileId: string) {
+    const drive = await this.get_storage(account).get_drive();
+
+    const file = await drive.files.delete({
+      fileId,
+    });
+
+    return file.status === 204;
+  }
 }

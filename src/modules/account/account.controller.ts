@@ -17,7 +17,10 @@ import { IncreaseSizeRequestDTO__Output } from 'pb/account/IncreaseSizeRequestDT
 import { NewAccountRequestDTO__Output } from 'pb/account/NewAccountRequestDTO';
 import { PaginationRequestDTO__Output } from 'pb/account/PaginationRequestDTO';
 import { TotalStorageResponse } from 'pb/account/TotalStorageResponse';
+import { UpdateLabelDTO__Output } from 'pb/account/UpdateLabelDTO';
 import { UploadRequestDTO__Output } from 'pb/account/UploadRequestDTO';
+import { UploadResponseDTO__Output } from 'pb/account/UploadResponseDTO';
+import { BoolValue, BoolValue__Output } from 'pb/google/protobuf/BoolValue';
 import {
   StringValue,
   StringValue__Output,
@@ -28,8 +31,6 @@ import { Observable, from } from 'rxjs';
 import { GrpcService } from 'src/common/type';
 import { AccountRepository } from 'src/database';
 import { StorageService } from '../storage/storage.service';
-import { BoolValue__Output } from 'pb/google/protobuf/BoolValue';
-import { UpdateLabelDTO__Output } from 'pb/account/UpdateLabelDTO';
 
 const SERVICE_NAME = 'AccountService';
 
@@ -45,6 +46,19 @@ export class AccountController implements GrpcService<AccountServiceHandlers> {
   @Inject(forwardRef(() => StorageService))
   // @ts-ignore
   private readonly storageService: StorageService;
+
+  onApplicationBootstrap() {
+    this.SyncAccountSizes();
+  }
+
+  private async SyncAccountSizes() {
+    const accounts = await this.accountRepository.get_unsynced_accounts();
+
+    for (const account of accounts) {
+      const sizes = await this.storageService.get_storage_sizes(account);
+      this.accountRepository.sync_size(account._id, sizes);
+    }
+  }
 
   @GrpcMethod(SERVICE_NAME)
   async NewAccount(data: NewAccountRequestDTO__Output): Promise<Account> {
@@ -149,7 +163,7 @@ export class AccountController implements GrpcService<AccountServiceHandlers> {
 
     const response = await this.accountRepository.increase_available_size(
       _id,
-      size,
+      parseInt(size),
     );
 
     return { value: response.modifiedCount };
@@ -160,7 +174,7 @@ export class AccountController implements GrpcService<AccountServiceHandlers> {
   async Upload(
     data: Observable<UploadRequestDTO__Output>,
     metadata: Metadata,
-  ): Promise<StringValue__Output> {
+  ): Promise<UploadResponseDTO__Output> {
     const [account_id] = metadata.get('account');
     const account = await this.accountRepository.get_account_by_id(
       account_id as string,
@@ -180,17 +194,20 @@ export class AccountController implements GrpcService<AccountServiceHandlers> {
       },
     });
 
+    const name = crypto.randomUUID();
+
     const file_id = await this.storageService.upload(
       account,
-      crypto.randomUUID(),
+      name,
       pass_through,
     );
+
     if (!file_id) {
       console.log('file_id error', file_id);
       throw new RpcException('Error on uploading file');
     }
 
-    return { value: file_id };
+    return { file_id, name };
   }
 
   @GrpcMethod(SERVICE_NAME)
@@ -204,5 +221,16 @@ export class AccountController implements GrpcService<AccountServiceHandlers> {
     const { _id, label } = data;
     const response = await this.accountRepository.update_label(_id, label);
     return { value: response };
+  }
+
+  @GrpcMethod(SERVICE_NAME)
+  async SyncSize(data: StringValue__Output): Promise<BoolValue> {
+    const account = await this.accountRepository.get_account_by_id(data.value);
+    if (!account) {
+      throw new RpcException('Account not found');
+    }
+    const sizes = await this.storageService.get_storage_sizes(account);
+    const response = await this.accountRepository.sync_size(account._id, sizes);
+    return { value: !!response.modifiedCount };
   }
 }

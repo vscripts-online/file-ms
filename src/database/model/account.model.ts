@@ -18,6 +18,7 @@ export interface IAccountSchema {
   access_token_expiry_time?: number;
   storage_size: number;
   available_size: number;
+  sync_time: string;
 }
 
 @Schema({
@@ -54,6 +55,9 @@ export class AccountSchema extends BaseSchema implements IAccountSchema {
 
   @Prop({ default: 0 })
   available_size: number;
+
+  @Prop({ required: false, default: new Date() })
+  sync_time: string;
 }
 
 export const AccountSchemaClass = SchemaFactory.createForClass(AccountSchema);

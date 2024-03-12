@@ -20,6 +20,10 @@ export class FileRepository {
     return this.model.findOne<FileSchema>(filter, projection, options);
   }
 
+  async delete(filter: FilterQuery<FileSchema>) {
+    return this.model.findOneAndDelete<FileSchema>(filter);
+  }
+
   async update(params: UpdateFileRequestDTO__Output) {
     const { _id, file_name, headers, user } = params;
     return this.model.findOneAndUpdate<FileSchema>(
@@ -42,17 +46,6 @@ export class FileRepository {
       { $push: { parts: { ...file_part } } },
     );
   }
-
-  // async get_unsynced_files() {
-  //   return this.model
-  //     .find({ 'parts.0': { $exists: false } })
-  //     .select('name')
-  //     .lean();
-  // }
-
-  // async delete_file_by_id(_id: string) {
-  //   return this.model.deleteOne({ _id });
-  // }
 
   async set_loading_from_cloud_now(
     _id: string,
